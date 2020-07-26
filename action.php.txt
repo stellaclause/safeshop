@@ -1,0 +1,163 @@
+<html>
+<body>
+*only works for states: Texas, Illinois
+
+
+<?php include "index.php"; 
+
+$var = $_POST["zipcode"];
+echo "Y<ol align='center'> <font color=blue size='4pt'> Your Zipcode: </font></ol>".$var." <br>"; 
+
+$sql = "SELECT StateName, County FROM `ZIP` WHERE Zipcode='$var'";
+$result = $conn->query($sql);
+
+$row=$result->fetch();
+$state=$row['StateName'];
+$county=$row['County'];
+
+echo "State: ".$state.", County: ".$county." <br>";
+
+////////////
+$county_name=$county." County";
+
+$sql_covid = "SELECT Confirmed FROM `BingCovidData` WHERE StateName='$state' AND CountyName='$county_name'";
+$result_covid = $conn->query($sql_covid);
+
+$row_covid=$result_covid->fetch();
+$confirmed=$row_covid['Confirmed'];
+
+echo "Confirmed: ".$confirmed." <br>";
+
+////////////
+$sql_land_area = "SELECT Arealand FROM `LandArea` WHERE CountyName='$county'";// need to convert statename to num
+$result_land_area = $conn->query($sql_land_area);
+
+$row_land_area=$result_land_area->fetch();
+$landarea=$row_land_area['Arealand'];
+
+echo "Landarea: ".$landarea." <br>";
+///////////
+$sql_county_pop = "SELECT Population FROM `PopulationByCounty` WHERE CountyName='$county_name' AND StateName='$state'";
+$result_county_pop = $conn->query($sql_county_pop);
+
+$row_county_pop=$result_county_pop->fetch();
+$county_pop=$row_county_pop['Population'];
+
+echo "Population: ".$county_pop." <br>";
+
+$pop_density=($county_pop/$landarea)*2589988;
+
+echo "Pop Density: ".$pop_density." <br>";
+//////////
+
+$covid_ratio = $confirmed/$county_pop;
+//////////
+
+$p_rate; //population susceptibilty rating, 1 to 10
+$c_rate; // cases susceptibilty rating, 1 to 10
+$p_scale; //max-min divided by 10
+$c_scale;
+
+$sql_min_max = "SELECT min(Confirmed/Population) as min_value, max(Confirmed/Population) as max_value
+FROM `PopulationByCounty` p JOIN `BingCovidData` b
+on p.StateName = b.StateName AND p.CountyName = b.CountyName";
+$result_cmin = $conn->query($sql_min_max);
+$row_cmin=$result_cmin->fetch();
+$cmin=$row_cmin['min_value'];
+$cmax=$row_cmin['max_value'];
+$c_scale=($cmax-$cmin)/10;
+
+
+echo "Confirmed Cases Percentage Min: ".$cmin." Max: ".$cmax." <br>";
+
+$sql_min_max = "SELECT min((Population/Arealand)*2589988) as min_value, max((Population/Arealand)*2589988) as max_value
+FROM `PopulationByCounty` p JOIN `LandArea` l
+on p.StateNum = l.StateNum AND p.CountyName = concat(l.CountyName,' County')";
+$result_pmin = $conn->query($sql_min_max);
+$row_pmin=$result_pmin->fetch();
+$pmin=$row_pmin['min_value'];
+$pmax=$row_pmin['max_value'];
+$p_scale=($pmax-$pmin)/10;
+
+echo "Pop Density Min: ".$pmin." Max: ".$pmax." <br>";
+
+if($pop_density<($p_min + $p_scale)){
+    $p_rate=1;
+}
+else if($pop_density<($p_min + $p_scale*2)){
+    $p_rate=2;
+}
+else if($pop_density<($p_min + $p_scale*3)){
+    $p_rate=3;
+}
+else if($pop_density<($p_min + $p_scale*4)){
+    $p_rate=4;
+}
+else if($pop_density<($p_min + $p_scale*5)){
+    $p_rate=5;
+}
+else if($pop_density<($p_min + $p_scale*6)){
+    $p_rate=6;
+}
+else if($pop_density<($p_min + $p_scale*7)){
+    $p_rate=7;
+}
+else if($pop_density<($p_min + $p_scale*8)){
+    $p_rate=8;
+}
+else if($pop_density<($p_min + $p_scale*9)){
+    $p_rate=9;
+}
+else if($pop_density<($p_min + $p_scale*10)){
+    $p_rate=10;
+}
+
+echo "Population Danger Rating: ".$p_rate." <br>";
+
+
+
+if($covid_ratio<($c_min + $c_scale)){
+    $c_rate=1;
+}
+else if($covid_ratio<($c_min + $c_scale*2)){
+    $c_rate=2;
+}
+else if($covid_ratio<($c_min + $c_scale*3)){
+    $c_rate=3;
+}
+else if($covid_ratio<($c_min + $c_scale*4)){
+    $c_rate=4;
+}
+else if($covid_ratio<($c_min + $c_scale*5)){
+    $c_rate=5;
+}
+else if($covid_ratio<($c_min + $c_scale*6)){
+    $c_rate=6;
+}
+else if($covid_ratio<($c_min + $c_scale*7)){
+    $c_rate=7;
+}
+else if($covid_ratio<($c_min + $c_scale*8)){
+    $c_rate=8;
+}
+else if($covid_ratio<($c_min + $c_scale*9)){
+    $c_rate=9;
+}
+else if($covid_ratio<($c_min + $c_scale*10)){
+    $c_rate=10;
+}
+
+echo "Covid Percentage Danger Rating: ".$c_rate." <br>";
+
+echo "Weighted Average: ".(($p_rate+$c_rate)/2)." <br>";
+
+
+
+
+
+?>
+
+</body>
+</html>
+
+

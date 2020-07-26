@@ -1,0 +1,30 @@
+<html>
+    <h1 style="text-align:center; color:Black; margin: 20px;">Susceptibility Rating</h1>
+    <p style="text-align:center; color:red; margin: 20px;">*only works for states: Texas, Illinois</p>
+    <body style="text-align:center; border: 5px solid #4287f5; outline: #57b342 solid 150px; margin: 50px 150px 50px 150px;">
+
+<?php
+$selected_zip = "";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $selected_zip = $_POST["zipcode"];
+}
+?>
+
+<?php include "phpconnect.php"; ?>
+
+<form action="action.php" method="post">
+  
+
+<label for="zipcode">Choose a zipcode:</label>
+    <input type="text" id="zipcode" name="zipcode" value="<?php echo $selected_zip?>"><br></br>
+ 
+    <input type="submit" name="search"
+                class="button" value="Search" /> 
+
+
+
+    
+
+</form>
+</body>
+</html>
